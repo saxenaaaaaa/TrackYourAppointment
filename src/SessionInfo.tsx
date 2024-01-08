@@ -24,19 +24,25 @@ export default function SessionInfo(): React.JSX.Element {
     
     const todaysDate = new Date().toLocaleDateString("en-IN");
     const [patientSeenStatusGrid, setPatientSeenStatusGrid] = useState<PatientSeenStatus[]>(initializePatientSeenStatusGrid);
+    // this effect is used to load the grid status from the storage if there exists any saved status and update the state to display where use left off 
     useEffect(() => {
         (async () => {
             const savedPatientSeenStatusGrid = await AsyncStorage.getItem(todaysDate);
-            console.log(savedPatientSeenStatusGrid);
+            console.log("retrieving patient grid",savedPatientSeenStatusGrid);
             if(savedPatientSeenStatusGrid) {
                 setPatientSeenStatusGrid(JSON.parse(savedPatientSeenStatusGrid));
             }
         })();
         
-        // return () => {
-        //     (async () => {await AsyncStorage.setItem(todaysDate, JSON.stringify(patientSeenStatusGrid))})();
-        // }
     },[]);
+    // this effect is used to update the storage everytime there is an update in the grid status so that we dont lose the data if the app is closed
+    // deliberately or in accidental crash
+    useEffect(() => {
+        // console.log("Saving patient grid",patientSeenStatusGrid);
+        // todo: this will save to storage on every update. See how to batch these updates and save only  when the user is about to close the app
+        (async () => {await AsyncStorage.setItem(todaysDate, JSON.stringify(patientSeenStatusGrid))})();
+        
+    },[patientSeenStatusGrid]);
     const startTime = "11 am";
     const seenPatients = patientSeenStatusGrid.filter(patientSeenStatus => patientSeenStatus.seenStatus === true)
     let currentStatus = SessionCurrentStatus.NOT_STARTED;
