@@ -60,18 +60,20 @@ import SessionInfo, { SessionCurrentStatus } from './SessionInfo';
 // }
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  // const isDarkMode = useColorScheme() === 'dark';
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  // const backgroundStyle = {
+  //   backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  // };
   
-  const now = new Date();
-  console.log(now.getDay());
+    const doctorName = "Madnani";
+    const clinicInfoData = {
+      doctorName: doctorName,
+    }
     return (
         <View>
             <ClinicInfo doctorName="Madnani"/>
-            {isClinicOpenToday() && (<SessionInfo />)}
+            {isClinicOpenToday() && (<SessionInfo clinicInfoData={clinicInfoData}/>)}
         </View>
     );
 {/*   return ( */}

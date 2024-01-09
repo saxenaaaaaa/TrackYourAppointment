@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
+import { getTodaysDate } from './util/utils';
 
 type ClinicInfoProps = {
     doctorName: string
@@ -11,8 +12,7 @@ export function isClinicOpenToday() {
 
 export default function ClinicInfo({doctorName}: ClinicInfoProps): React.JSX.Element {
     
-    const now = new Date();
-    const date = now.toLocaleDateString("en-IN");
+    const date = getTodaysDate();
     let dateLabel = (<Text>{date}</Text>);
     if(!isClinicOpenToday) {
         dateLabel = (<Text>As it is Sunday, the clinic is closed today</Text>)

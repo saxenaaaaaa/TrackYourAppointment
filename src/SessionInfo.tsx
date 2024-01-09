@@ -2,12 +2,15 @@ import React, {useEffect, useState} from 'react';
 import { Alert, Text, View } from 'react-native';
 import PatientSeenStatusGrid, { PatientSeenStatus } from './PatientSeenStatusGrid';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getTodaysDate } from './util/utils';
 
 export enum SessionCurrentStatus {
     NOT_STARTED = "Not Started",
     ONGOING = "On Going",
-    FINISHED = "Finished"
+    ENDED = "Ended"
 }
+
+const serverUrl = "http://localhost.com:8000";
 
 function initializePatientSeenStatusGrid(): Array<PatientSeenStatus> {
     let initialPatientSeenStatusGrid = new Array<PatientSeenStatus>(200);//.map((patientSeenStatus, index) => {return {id: index, seenStatus: false}});
@@ -20,15 +23,42 @@ function initializePatientSeenStatusGrid(): Array<PatientSeenStatus> {
     return initialPatientSeenStatusGrid;
 }
 
-export default function SessionInfo(): React.JSX.Element {
+export interface SessionInfoProps {
+    clinicInfoData: {
+        doctorName: string;
+    }
+}
+
+export interface ClinicDataDTO {
+    patientSeenStatusList: PatientSeenStatus[],
+    doctorName: string;
+    startTime: string;
+    currentStatus: SessionCurrentStatus;
+    date: string
+}
+
+export default function SessionInfo({clinicInfoData}: SessionInfoProps): React.JSX.Element {
     
-    const todaysDate = new Date().toLocaleDateString("en-IN");
+    const todaysDate = getTodaysDate();
+    const startTime = "11 am";
     const [patientSeenStatusGrid, setPatientSeenStatusGrid] = useState<PatientSeenStatus[]>(initializePatientSeenStatusGrid);
+    const seenPatients = patientSeenStatusGrid.filter(patientSeenStatus => patientSeenStatus.seenStatus === true)
+    let currentStatus = SessionCurrentStatus.NOT_STARTED;
+    if(seenPatients.length > 0) {
+        currentStatus = SessionCurrentStatus.ONGOING // todo: see how we can change the status to finished
+    }
+    let clinicDataDto: ClinicDataDTO = {
+        doctorName: clinicInfoData.doctorName,
+        date: todaysDate,
+        patientSeenStatusList: patientSeenStatusGrid,
+        startTime: startTime,
+        currentStatus: currentStatus
+    }
     // this effect is used to load the grid status from the storage if there exists any saved status and update the state to display where use left off 
     useEffect(() => {
         (async () => {
             const savedPatientSeenStatusGrid = await AsyncStorage.getItem(todaysDate);
-            console.log("retrieving patient grid",savedPatientSeenStatusGrid);
+            // console.log("retrieving patient grid",savedPatientSeenStatusGrid);
             if(savedPatientSeenStatusGrid) {
                 setPatientSeenStatusGrid(JSON.parse(savedPatientSeenStatusGrid));
             }
@@ -40,15 +70,24 @@ export default function SessionInfo(): React.JSX.Element {
     useEffect(() => {
         // console.log("Saving patient grid",patientSeenStatusGrid);
         // todo: this will save to storage on every update. See how to batch these updates and save only  when the user is about to close the app
-        (async () => {await AsyncStorage.setItem(todaysDate, JSON.stringify(patientSeenStatusGrid))})();
+        (async () => {
+            try {
+                await AsyncStorage.setItem(todaysDate, JSON.stringify(patientSeenStatusGrid))
+                const resourceUrl = `${serverUrl}/clinicData`
+                await fetch(`${resourceUrl}/update`, {
+                    method: "POST",
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(clinicDataDto),
+                })   
+            } catch(error) {
+                console.error("There was some error sending udpate data to server.", error);
+            }
+        })();
         
-    },[patientSeenStatusGrid]);
-    const startTime = "11 am";
-    const seenPatients = patientSeenStatusGrid.filter(patientSeenStatus => patientSeenStatus.seenStatus === true)
-    let currentStatus = SessionCurrentStatus.NOT_STARTED;
-    if(seenPatients.length > 0) {
-        currentStatus = SessionCurrentStatus.ONGOING // todo: see how we can change the status to finished
-    }
+    },[patientSeenStatusGrid, clinicDataDto]);
 
     async function onPressHandler(patientId: number) {
         
@@ -71,7 +110,7 @@ export default function SessionInfo(): React.JSX.Element {
             },
             {text: 'Nahi', onPress: async () => {
                 setPatientSeenStatusGrid(nextPatientSeenStatusGrid);
-                await AsyncStorage.setItem(todaysDate, JSON.stringify(patientSeenStatusGrid));
+                // await AsyncStorage.setItem(todaysDate, JSON.stringify(patientSeenStatusGrid));
             }},
         ]);
         for(let i=0; i<patientSeenStatusGrid.length; i++) {
@@ -84,7 +123,7 @@ export default function SessionInfo(): React.JSX.Element {
             }
         }
         setPatientSeenStatusGrid(nextPatientSeenStatusGrid);
-        await AsyncStorage.setItem(todaysDate, JSON.stringify(patientSeenStatusGrid));
+        // await AsyncStorage.setItem(todaysDate, JSON.stringify(patientSeenStatusGrid));
     }
 
     return (
