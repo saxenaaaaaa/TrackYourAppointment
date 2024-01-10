@@ -14,7 +14,7 @@ export default function ClinicInfo({doctorName}: ClinicInfoProps): React.JSX.Ele
     
     const date = getTodaysDate();
     let dateLabel = (<Text>{date}</Text>);
-    if(!isClinicOpenToday) {
+    if(!isClinicOpenToday()) {
         dateLabel = (<Text>As it is Sunday, the clinic is closed today</Text>)
     }
     return (

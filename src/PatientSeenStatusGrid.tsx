@@ -4,7 +4,7 @@ import Button from './util/Button';
 
 export type PatientSeenStatus = {
     id: number;
-    seenStatus: boolean
+    status: boolean
 }
 
 interface PatientSeenStatusGridProps {
@@ -18,7 +18,7 @@ export default function PatientSeenStatusGrid({patientSeenStatusTable, onPress}:
     const patientSeenStatusRenderItem = ({item}: {item: PatientSeenStatus}): React.JSX.Element => {
         return (
             <Button 
-                backgroundColor = {item.seenStatus ? "green" : "black"}
+                backgroundColor = {item.status ? "green" : "black"}
                 text = {`${item.id}`}
                 onPress={() => onPress(item.id)} // add interactivity when adding state
                 />

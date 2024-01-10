@@ -10,14 +10,14 @@ export enum SessionCurrentStatus {
     ENDED = "Ended"
 }
 
-const serverUrl = "http://localhost.com:8000";
+const serverUrl = "http://192.168.1.7:8000";
 
 function initializePatientSeenStatusGrid(): Array<PatientSeenStatus> {
     let initialPatientSeenStatusGrid = new Array<PatientSeenStatus>(200);//.map((patientSeenStatus, index) => {return {id: index, seenStatus: false}});
     for(let i=0; i<200; i++) {
         initialPatientSeenStatusGrid[i] = {
             id: i+1,
-            seenStatus: false
+            status: false
         }
     }
     return initialPatientSeenStatusGrid;
@@ -42,7 +42,7 @@ export default function SessionInfo({clinicInfoData}: SessionInfoProps): React.J
     const todaysDate = getTodaysDate();
     const startTime = "11 am";
     const [patientSeenStatusGrid, setPatientSeenStatusGrid] = useState<PatientSeenStatus[]>(initializePatientSeenStatusGrid);
-    const seenPatients = patientSeenStatusGrid.filter(patientSeenStatus => patientSeenStatus.seenStatus === true)
+    const seenPatients = patientSeenStatusGrid.filter(patientSeenStatus => patientSeenStatus.status === true)
     let currentStatus = SessionCurrentStatus.NOT_STARTED;
     if(seenPatients.length > 0) {
         currentStatus = SessionCurrentStatus.ONGOING // todo: see how we can change the status to finished
@@ -81,7 +81,8 @@ export default function SessionInfo({clinicInfoData}: SessionInfoProps): React.J
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify(clinicDataDto),
-                })   
+                }) 
+                console.log("Successfully sent event data");  
             } catch(error) {
                 console.error("There was some error sending udpate data to server.", error);
             }
@@ -95,7 +96,7 @@ export default function SessionInfo({clinicInfoData}: SessionInfoProps): React.J
             if(patientSeenStatus.id === patientId) {
                 return {
                     ...patientSeenStatus,
-                    seenStatus: !patientSeenStatus.seenStatus
+                    status: !patientSeenStatus.status
                 }
             }
             else {
@@ -116,7 +117,7 @@ export default function SessionInfo({clinicInfoData}: SessionInfoProps): React.J
         for(let i=0; i<patientSeenStatusGrid.length; i++) {
             const patientSeenStatus = patientSeenStatusGrid[i];
             if(patientSeenStatus.id === patientId) {
-                if(patientSeenStatus.seenStatus === true) {
+                if(patientSeenStatus.status === true) {
                     createTwoButtonAlert();
                     return;
                 }
