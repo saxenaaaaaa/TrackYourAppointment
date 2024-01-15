@@ -1,8 +1,9 @@
-import React, {useEffect, useState} from 'react';
-import { Alert, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, View } from 'react-native';
 import PatientSeenStatusGrid, { PatientSeenStatus } from './PatientSeenStatusGrid';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getTodaysDate } from './util/utils';
+import { Box, Divider, Stack, Text } from '@react-native-material/core';
 
 export enum SessionCurrentStatus {
     NOT_STARTED = "Not Started",
@@ -10,13 +11,14 @@ export enum SessionCurrentStatus {
     ENDED = "Ended"
 }
 
-const serverUrl = "http://192.168.1.7:8000";
+const SERVER_URI = "www.digitracker.org"
+const serverUrl = `http://${SERVER_URI}:8000`;
 
 function initializePatientSeenStatusGrid(): Array<PatientSeenStatus> {
     let initialPatientSeenStatusGrid = new Array<PatientSeenStatus>(200);//.map((patientSeenStatus, index) => {return {id: index, seenStatus: false}});
-    for(let i=0; i<200; i++) {
+    for (let i = 0; i < 200; i++) {
         initialPatientSeenStatusGrid[i] = {
-            id: i+1,
+            id: i + 1,
             status: false
         }
     }
@@ -37,14 +39,14 @@ export interface ClinicDataDTO {
     date: string
 }
 
-export default function SessionInfo({clinicInfoData}: SessionInfoProps): React.JSX.Element {
-    
+export default function SessionInfo({ clinicInfoData }: SessionInfoProps): React.JSX.Element {
+
     const todaysDate = getTodaysDate();
     const startTime = "11 am";
     const [patientSeenStatusGrid, setPatientSeenStatusGrid] = useState<PatientSeenStatus[]>(initializePatientSeenStatusGrid);
     const seenPatients = patientSeenStatusGrid.filter(patientSeenStatus => patientSeenStatus.status === true)
     let currentStatus = SessionCurrentStatus.NOT_STARTED;
-    if(seenPatients.length > 0) {
+    if (seenPatients.length > 0) {
         currentStatus = SessionCurrentStatus.ONGOING // todo: see how we can change the status to finished
     }
     let clinicDataDto: ClinicDataDTO = {
@@ -59,12 +61,12 @@ export default function SessionInfo({clinicInfoData}: SessionInfoProps): React.J
         (async () => {
             const savedPatientSeenStatusGrid = await AsyncStorage.getItem(todaysDate);
             // console.log("retrieving patient grid",savedPatientSeenStatusGrid);
-            if(savedPatientSeenStatusGrid) {
+            if (savedPatientSeenStatusGrid) {
                 setPatientSeenStatusGrid(JSON.parse(savedPatientSeenStatusGrid));
             }
         })();
-        
-    },[]);
+
+    }, []);
     // this effect is used to update the storage everytime there is an update in the grid status so that we dont lose the data if the app is closed
     // deliberately or in accidental crash
     useEffect(() => {
@@ -81,19 +83,19 @@ export default function SessionInfo({clinicInfoData}: SessionInfoProps): React.J
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify(clinicDataDto),
-                }) 
-                console.log("Successfully sent event data");  
-            } catch(error) {
+                })
+                console.log("Successfully sent event data");
+            } catch (error) {
                 console.error("There was some error sending udpate data to server.", error);
             }
         })();
-        
-    },[patientSeenStatusGrid, clinicDataDto]);
+
+    }, [patientSeenStatusGrid, clinicDataDto]);
 
     async function onPressHandler(patientId: number) {
-        
+
         const nextPatientSeenStatusGrid = patientSeenStatusGrid.map(patientSeenStatus => {
-            if(patientSeenStatus.id === patientId) {
+            if (patientSeenStatus.id === patientId) {
                 return {
                     ...patientSeenStatus,
                     status: !patientSeenStatus.status
@@ -106,18 +108,20 @@ export default function SessionInfo({clinicInfoData}: SessionInfoProps): React.J
         const createTwoButtonAlert = () => Alert.alert('Confirm!', `Kya aapne galti se ${patientId} touch kar diya?`, [
             {
                 text: 'Haan',
-                onPress: () => {},
+                onPress: () => { },
                 style: 'cancel',
             },
-            {text: 'Nahi', onPress: async () => {
-                setPatientSeenStatusGrid(nextPatientSeenStatusGrid);
-                // await AsyncStorage.setItem(todaysDate, JSON.stringify(patientSeenStatusGrid));
-            }},
+            {
+                text: 'Nahi', onPress: async () => {
+                    setPatientSeenStatusGrid(nextPatientSeenStatusGrid);
+                    // await AsyncStorage.setItem(todaysDate, JSON.stringify(patientSeenStatusGrid));
+                }
+            },
         ]);
-        for(let i=0; i<patientSeenStatusGrid.length; i++) {
+        for (let i = 0; i < patientSeenStatusGrid.length; i++) {
             const patientSeenStatus = patientSeenStatusGrid[i];
-            if(patientSeenStatus.id === patientId) {
-                if(patientSeenStatus.status === true) {
+            if (patientSeenStatus.id === patientId) {
+                if (patientSeenStatus.status === true) {
                     createTwoButtonAlert();
                     return;
                 }
@@ -128,10 +132,19 @@ export default function SessionInfo({clinicInfoData}: SessionInfoProps): React.J
     }
 
     return (
-        <View>
-            <Text>Starts at: {startTime}</Text>
-            <Text>Status: {currentStatus}</Text>
-            <PatientSeenStatusGrid patientSeenStatusTable={patientSeenStatusGrid} onPress={onPressHandler}/>
-        </View>
+        <Box>
+            <Box style={{ padding: 8, backgroundColor: 'black', borderRadius: 0 }}>
+                <Stack direction="column">
+                    <Text style={{ marginBottom: 1 }} variant="h6" color='white'>
+                        Starts at: {startTime}
+                    </Text>
+                    <Text style={{ marginBottom: 1 }} variant="h6" color='white'>
+                        Status: {currentStatus}
+                    </Text>
+                </Stack>
+            </Box>
+            <Divider />
+            <PatientSeenStatusGrid patientSeenStatusTable={patientSeenStatusGrid} onPress={onPressHandler} />
+        </Box>
     );
 }

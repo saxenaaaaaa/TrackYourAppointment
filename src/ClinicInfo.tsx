@@ -1,6 +1,6 @@
 import React from 'react';
-import { Text, View } from 'react-native';
 import { getTodaysDate } from './util/utils';
+import { Box, Stack, Text } from '@react-native-material/core';
 
 type ClinicInfoProps = {
     doctorName: string
@@ -10,18 +10,23 @@ export function isClinicOpenToday() {
     return (new Date().getDay() !== 0);
 }
 
-export default function ClinicInfo({doctorName}: ClinicInfoProps): React.JSX.Element {
-    
+export default function ClinicInfo({ doctorName }: ClinicInfoProps): React.JSX.Element {
+
     const date = getTodaysDate();
-    let dateLabel = (<Text>{date}</Text>);
-    if(!isClinicOpenToday()) {
-        dateLabel = (<Text>As it is Sunday, the clinic is closed today</Text>)
-    }
     return (
-        <View>
-            <Text>Welcome to Dr. {doctorName}'s clinic</Text>
-            <Text>{dateLabel}</Text>
-        </View>
+        <Box style={{ backgroundColor: 'black', borderRadius: 0 }}>
+            <Stack style={{ padding: 8 }} direction="row" justify="between">
+                <Text style={{ marginBottom: 1 }} color='white' variant="h5">
+                    Dr. {doctorName}'s clinic
+                </Text>
+                <Text style={{ marginBottom: 1 }} color='white' variant="h6">
+                    {date}
+                </Text>
+            </Stack>
+            {!isClinicOpenToday() ? (<Text color="white" variant="body2">
+                As it is Sunday, the clinic is closed today.
+            </Text>) : null}
+        </Box>
     );
 }
 
