@@ -7,7 +7,7 @@ type ClinicInfoProps = {
 }
 
 export function isClinicOpenToday() {
-    return (new Date().getDay() !== 0);
+    return true;//(new Date().getDay() !== 0);
 }
 
 export default function ClinicInfo({ doctorName }: ClinicInfoProps): React.JSX.Element {
@@ -24,7 +24,7 @@ export default function ClinicInfo({ doctorName }: ClinicInfoProps): React.JSX.E
                 </Text>
             </Stack>
             {!isClinicOpenToday() ? (<Text color="white" variant="body2">
-                As it is Sunday, the clinic is closed today.
+                The clinic is closed today.
             </Text>) : null}
         </Box>
     );
