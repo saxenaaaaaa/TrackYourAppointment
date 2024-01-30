@@ -15,6 +15,7 @@ export default function ClinicRegistration({ onSubmit }: ClinicRegistrationProps
     const [doctorsList, setDoctorsList] = useState([]);
     const [doctorName, setDoctorName] = useState("");
     const [schedule, setSchedule] = useState("");
+    const [scheduleBoxHeight, setScheduleBoxHeight] = useState(0);
 
     useEffect(() => {
         (async () => {
@@ -48,8 +49,10 @@ export default function ClinicRegistration({ onSubmit }: ClinicRegistrationProps
                 rowTextForSelection={doctorListItem => `Dr. ${doctorListItem.name}`}
             />
             <TextInput 
+                multiline
+                onContentSizeChange={(event) => setScheduleBoxHeight(event.nativeEvent.contentSize.height)}
                 label="Doctor's Schedule" 
-                style={{ width: "auto", marginHorizontal: 32 }} 
+                style={{ width: "auto", marginHorizontal: 32, marginBottom: 8,height: Math.max(35, scheduleBoxHeight) }} 
                 value={schedule} 
                 onChangeText={text => setSchedule(text)}/>
             <Button title="Submit" style={{ width: "auto", marginHorizontal: 32 }} onPress={() => {
