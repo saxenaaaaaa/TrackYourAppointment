@@ -15,7 +15,7 @@ export default function ClinicInfo({ doctorName }: ClinicInfoProps): React.JSX.E
     const date = getTodaysDate();
     return (
         <Box style={{ backgroundColor: 'black', borderRadius: 0 }}>
-            <Stack style={{ padding: 8 }} direction="row" justify="between">
+            <Stack style={{ padding: 8 }} direction="row" justify="between" wrap>
                 <Text style={{ marginBottom: 1 }} color='white' variant="h5">
                     Dr. {doctorName}'s clinic
                 </Text>

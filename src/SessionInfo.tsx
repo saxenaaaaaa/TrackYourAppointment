@@ -4,15 +4,17 @@ import PatientSeenStatusGrid, { PatientSeenStatus } from './PatientSeenStatusGri
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getTodaysDate } from './util/utils';
 import { Box, Divider, Stack, Switch, Text } from '@react-native-material/core';
-
+import { ClinicInfoData } from "./App";
 export enum SessionCurrentStatus {
     NOT_STARTED = "Not Started",
     ONGOING = "On Going",
     ENDED = "Ended"
 }
 
-const SERVER_URI = "www.digitracker.org"
-const serverUrl = `https://${SERVER_URI}:8000`;
+const SERVER_URI = "www.digitracker.org";
+// const SERVER_URI = "192.168.1.7"
+// export const serverUrl = `http://${SERVER_URI}:8000`;
+export const serverUrl = `https://${SERVER_URI}:8000`;
 
 function initializePatientSeenStatusGrid(): Array<PatientSeenStatus> {
     let initialPatientSeenStatusGrid = new Array<PatientSeenStatus>(200);//.map((patientSeenStatus, index) => {return {id: index, seenStatus: false}});
@@ -26,9 +28,7 @@ function initializePatientSeenStatusGrid(): Array<PatientSeenStatus> {
 }
 
 export interface SessionInfoProps {
-    clinicInfoData: {
-        doctorName: string;
-    }
+    clinicInfoData: ClinicInfoData;
 }
 
 export interface ClinicDataDTO {
@@ -42,7 +42,7 @@ export interface ClinicDataDTO {
 export default function SessionInfo({ clinicInfoData }: SessionInfoProps): React.JSX.Element {
 
     const todaysDate = getTodaysDate();
-    const schedule = "12pm to 3pm, Everyday";
+    const schedule = clinicInfoData.schedule;
     const [patientSeenStatusGrid, setPatientSeenStatusGrid] = useState<PatientSeenStatus[]>(initializePatientSeenStatusGrid);
     const [sessionEnded, setSessionEnded] = useState<boolean>(false);
     const seenPatients = patientSeenStatusGrid.filter(patientSeenStatus => patientSeenStatus.status === true)
@@ -103,6 +103,7 @@ export default function SessionInfo({ clinicInfoData }: SessionInfoProps): React
                 })
                 console.log("Successfully sent event data");
             } catch (error) {
+                // todo: reverse the action in UI as well because we failed to send data to the server.
                 console.error("There was some error sending udpate data to server.", error);
             }
         })();
