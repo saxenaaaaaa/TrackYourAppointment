@@ -17,49 +17,58 @@ import { MMKV } from 'react-native-mmkv'
 
 export const storage = new MMKV();
 
-export interface RegistrationData {
-  doctorName: string;
-  schedule: string;
+export enum HttpStatusCode {
+  OK = 200,
+  NOT_FOUND = 404,
+  BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  FORBIDDEN = 403,
+  INTERNAL_SERVER_ERROR = 500
 }
 
-export type ClinicInfoData = RegistrationData;
+export interface DoctorDataDTO {
+  _id?: string;
+  name: string;
+  schedule?: string;
+  password?: string;
+}
+
+export type ClinicInfoData = DoctorDataDTO;
 
 function App(): React.JSX.Element {
-  const [registrationData, setRegistrationData] = useState<RegistrationData | null>(null);
+  const [doctorData, setDoctorData] = useState<DoctorDataDTO | null>(null);
 
   useEffect(() => {
     
-      const savedRegistrationData: any = storage.getString("registrationData");
-      if (savedRegistrationData) {
-        setRegistrationData(JSON.parse(savedRegistrationData));
+      const savedDoctorData: any = storage.getString("doctorData");
+      if (savedDoctorData) {
+        setDoctorData(JSON.parse(savedDoctorData));
       }
     
   }, []);
 
-  if (registrationData && registrationData.doctorName && registrationData.schedule) {
+  if (doctorData) {
 
     const clinicInfoData: ClinicInfoData = {
-      doctorName: registrationData.doctorName,
-      schedule: registrationData.schedule
+      _id: doctorData._id,
+      name: doctorData.name,
+      schedule: doctorData.schedule
     }
     return (
       <View>
-        <ClinicInfo doctorName={registrationData.doctorName} />
+        <ClinicInfo doctorName={doctorData.name} />
         {isClinicOpenToday() && (<SessionInfo clinicInfoData={clinicInfoData} />)}
       </View>
     );
   }
   else {
-    function registrationHandler(doctorName: string, schedule: string) {
-      const registrationData: RegistrationData = {
-        doctorName: doctorName,
-        schedule: schedule
-      }
-      setRegistrationData(registrationData);
-      storage.set("registrationData", JSON.stringify(registrationData));
+    // todo: add logout functionality as well
+    function loginDataHandler(doctorDataDto: DoctorDataDTO) {
+      setDoctorData(doctorDataDto);
+      storage.set("doctorData", JSON.stringify(doctorDataDto));
     }
 
-    return (<ClinicRegistration onSubmit={registrationHandler}/>);
+    return (<ClinicRegistration onLoginSuccessful={loginDataHandler}/>);
   }
 }
 

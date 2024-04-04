@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, View } from 'react-native';
 import PatientSeenStatusGrid, { PatientSeenStatus } from './PatientSeenStatusGrid';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getTodaysDate } from './util/utils';
 import { Box, Divider, Stack, Switch, Text } from '@react-native-material/core';
-import { ClinicInfoData } from "./App";
+import { ClinicInfoData, HttpStatusCode, storage } from "./App";
 export enum SessionCurrentStatus {
     NOT_STARTED = "Not Started",
     ONGOING = "On Going",
@@ -12,7 +12,7 @@ export enum SessionCurrentStatus {
 }
 
 const SERVER_URI = "www.digitracker.org";
-// const SERVER_URI = "192.168.1.7"
+// const SERVER_URI = "192.168.1.10"
 // export const serverUrl = `http://${SERVER_URI}:8000`;
 export const serverUrl = `https://${SERVER_URI}:8000`;
 
@@ -32,9 +32,8 @@ export interface SessionInfoProps {
 }
 
 export interface ClinicDataDTO {
+    doctorId: string,
     patientSeenStatusList: PatientSeenStatus[],
-    doctorName: string;
-    schedule: string;
     currentStatus: SessionCurrentStatus;
     date: string
 }
@@ -42,7 +41,7 @@ export interface ClinicDataDTO {
 export default function SessionInfo({ clinicInfoData }: SessionInfoProps): React.JSX.Element {
 
     const todaysDate = getTodaysDate();
-    const schedule = clinicInfoData.schedule;
+    const schedule = clinicInfoData.schedule!;
     const [patientSeenStatusGrid, setPatientSeenStatusGrid] = useState<PatientSeenStatus[]>(initializePatientSeenStatusGrid);
     const [sessionEnded, setSessionEnded] = useState<boolean>(false);
     const seenPatients = patientSeenStatusGrid.filter(patientSeenStatus => patientSeenStatus.status === true)
@@ -58,7 +57,7 @@ export default function SessionInfo({ clinicInfoData }: SessionInfoProps): React
     useEffect(() => {
         console.log("Effect run");
         (async () => {
-            const savedData = await AsyncStorage.getItem(todaysDate);
+            const savedData = await storage.getString(todaysDate);
             // console.log("retrieving patient grid",savedPatientSeenStatusGrid);
             if (savedData) {
                 const {sessionEnded, savedPatientSeenStatusGrid } = JSON.parse(savedData);
@@ -82,18 +81,17 @@ export default function SessionInfo({ clinicInfoData }: SessionInfoProps): React
             currentStatus = SessionCurrentStatus.ONGOING // todo: see how we can change the status to finished
         }
         let clinicDataDto: ClinicDataDTO = {
-            doctorName: clinicInfoData.doctorName,
+            doctorId: clinicInfoData._id!,
             date: todaysDate,
             patientSeenStatusList: patientSeenStatusGrid,
-            schedule: schedule,
             currentStatus: currentStatus
         };
         console.log("Going to send clinic data.", clinicDataDto.currentStatus);
         (async () => {
             try {
-                await AsyncStorage.setItem(todaysDate, JSON.stringify({sessionEnded: sessionEnded, savedPatientSeenStatusGrid: patientSeenStatusGrid}))
+                await storage.set(todaysDate, JSON.stringify({sessionEnded: sessionEnded, savedPatientSeenStatusGrid: patientSeenStatusGrid}))
                 const resourceUrl = `${serverUrl}/clinicData`
-                await fetch(`${resourceUrl}/update`, {
+                const response = await fetch(`${resourceUrl}/update`, {
                     method: "POST",
                     headers: {
                         Accept: "application/json",
@@ -101,9 +99,18 @@ export default function SessionInfo({ clinicInfoData }: SessionInfoProps): React
                     },
                     body: JSON.stringify(clinicDataDto),
                 })
-                console.log("Successfully sent event data");
+                if(response.status !== HttpStatusCode.OK) {
+                    console.log("Error sending event data. Received response : ", response);
+                    console.log("Please retry the action as required.");
+                    // todo: reverse the action in UI as well because we failed to send data to the server.
+                    //       At the same time, ask the user to try again sending.
+                }
+                else {
+                    console.log("Successfully sent event data");
+                }
             } catch (error) {
                 // todo: reverse the action in UI as well because we failed to send data to the server.
+                //       At the same time, ask the user to try again sending.
                 console.error("There was some error sending udpate data to server.", error);
             }
         })();
